@@ -405,9 +405,11 @@ namespace.default.visible = true
 
 namespace.default.search.paths  = /odm/${LIB}
 namespace.default.search.paths += /vendor/${LIB}
+namespace.default.search.paths += /mnt/vendor/persist/audio
 
 namespace.default.permitted.paths  = /odm
 namespace.default.permitted.paths += /vendor
+namespace.default.permitted.paths += /mnt/vendor/persist/audio
 namespace.default.permitted.paths += /system/vendor
 #VNDK27#namespace.default.search.paths += /vendor/${LIB}/hw
 #VNDK27#namespace.default.search.paths += /vendor/${LIB}/egl
