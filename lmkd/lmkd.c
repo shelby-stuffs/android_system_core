@@ -1675,7 +1675,8 @@ static int file_cache_to_adj(enum vmpressure_level lvl, int nr_free,
     }
 
 out:
-    ULMK_LOG(E, "adj:%d file_cache: %d\n", min_score_adj, nr_file);
+    if (debug_process_killing)
+	    ULMK_LOG(E, "adj:%d file_cache: %d\n", min_score_adj, nr_file);
     return min_score_adj;
 }
 
@@ -1711,7 +1712,8 @@ static int zone_watermarks_ok(enum vmpressure_level level)
             break;
 
         offset += nr;
-        ULMK_LOG(D, "Zone %s: free:%d high:%d cma:%d reserve:(%d %d %d) anon:(%d %d) file:(%d %d)\n",
+        if (debug_process_killing)
+            ULMK_LOG(D, "Zone %s: free:%d high:%d cma:%d reserve:(%d %d %d) anon:(%d %d) file:(%d %d)\n",
                 w.name, w.free, w.high, w.cma,
                 w.lowmem_reserve[0], w.lowmem_reserve[1], w.lowmem_reserve[2],
                 w.inactive_anon, w.active_anon, w.inactive_file, w.active_file);
@@ -2011,6 +2013,10 @@ static int64_t get_memory_usage(struct reread_data *file_data) {
     int64_t mem_usage;
     char *buf;
 
+    if (access(file_data->filename, F_OK)) {
+        return -1;
+    }
+
     if ((buf = reread_file(file_data)) == NULL) {
         return -1;
     }
@@ -2246,7 +2252,7 @@ static void mp_event_common(int data, uint32_t events __unused) {
     }
 
 do_kill:
-    if (low_ram_device) {
+    if (low_ram_device && per_app_memcg) {
         /* For Go devices kill only one task */
         if (find_and_kill_process(level_oomadj[level]) == 0) {
             if (debug_process_killing) {
@@ -2274,9 +2280,9 @@ do_kill:
                 min_score_adj = level_oomadj[level];
 	    } else {
                 min_score_adj = zone_watermarks_ok(level);
-                if (min_score_adj == OOM_SCORE_ADJ_MAX + 1)
-		        {
-                    ULMK_LOG(I, "Ignoring pressure since per-zone watermarks ok");
+                if (min_score_adj == OOM_SCORE_ADJ_MAX + 1) {
+			if (debug_process_killing)
+	                    ULMK_LOG(I, "Ignoring pressure since per-zone watermarks ok");
                     return;
                 }
             }
